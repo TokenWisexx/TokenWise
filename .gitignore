@@ -1,4 +1,34 @@
-*.pyc
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# environment & secrets
+.env
+.env.*
+backend/.env
+
+# python
 __pycache__/
-.DS_Store
+*.py[cod]
+*$py.class
+backend/__pycache__/
+.pytest_cache/
+
+# local logs and vector caches
+traces.jsonl
+backend/traces.jsonl
 embedding_cache.json
+backend/embedding_cache.json
+
+# misc
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
