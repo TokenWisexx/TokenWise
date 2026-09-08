@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
-const DEFAULT_API = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+const DEFAULT_API = process.env.REACT_APP_API_URL || 
+  (typeof window !== "undefined" && window.location.hostname && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" && !window.location.hostname.includes("github.io")
+    ? `http://${window.location.hostname}:8000`
+    : "http://127.0.0.1:8000");
 
 const LAYER_INFO = {
   math:       { label: "Math Engine",      color: "#F59E0B", icon: "🧮", layer: "0A", cost: "FREE (~1ms)" },
