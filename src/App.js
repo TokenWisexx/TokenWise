@@ -38,9 +38,11 @@ const LLM_PROVIDERS = [
 ];
 
 const SAMPLE_QUERIES = [
+  { text: "emma watson", layer: "0B", label: "Emma Watson (Layer 0B)" },
+  { text: "who was albert einstein", layer: "0B", label: "Albert Einstein (Layer 0B)" },
+  { text: "29383598235+1", layer: "0A", label: "Math (Layer 0A)" },
   { text: "give me the code structure of c++", layer: "2", label: "C++ Structure (Layer 2)" },
-  { text: "what is sinx/cosx", layer: "0A", label: "Math (Layer 0A)" },
-  { text: "who was Marie Curie", layer: "0B", label: "Wikipedia (Layer 0B)" },
+  { text: "who was Marie Curie", layer: "0B", label: "Marie Curie (Layer 0B)" },
   { text: "where is my package", layer: "1", label: "TinyML (Layer 1)" },
   { text: "why does this python code print 4 4 4 4 4 lambda in loop", layer: "2", label: "Python Bug (Layer 2)" },
   { text: "what is the syntax skeleton for a python script", layer: "3", label: "Python Skeleton (Layer 3)" },
@@ -48,17 +50,188 @@ const SAMPLE_QUERIES = [
   { text: "Write a production-grade distributed rate limiter in Python using Redis Lua script", layer: "5", label: "Deep AI (Layer 5)" },
 ];
 
-// ── CLIENT-SIDE SURROGATE REPOSITORY (FOR STANDALONE GITHUB PAGES MODE) ──
+// ── CLIENT-SIDE SURROGATE REPOSITORY (FOR STANDALONE & OFFLINE SURROGATE MODE) ──
 const CLIENT_KNOWLEDGE = {
   "give me the code structure of c++": `💻 **Standard C++ Program Structure & Skeleton:**\n\n\`\`\`cpp\n// 1. Preprocessor Directives\n#include <iostream>\n#include <vector>\n#include <string>\n\n// 2. Namespace Declaration\nusing namespace std;\n\n// 3. Constants & Macros\nconstexpr int MAX_BUFFER_SIZE = 1024;\n\n// 4. Classes / Structs\nclass Calculator {\nprivate:\n    double result;\npublic:\n    Calculator() : result(0.0) {}\n    double add(double a, double b) { return a + b; }\n};\n\n// 5. Function Prototypes\nvoid greetUser(const string& username);\n\n// 6. Main Entry Point\nint main(int argc, char* argv[]) {\n    Calculator calc;\n    cout << "Calculated Sum: " << calc.add(10.5, 20.5) << endl;\n    return 0;\n}\n\`\`\``,
-  "what is sinx/cosx": "🧮 **SymPy Math Solution:** `tan(x)` (Latency: ~1.2ms | $0.00 Cost)",
-  "simplify sin(x)^2 + cos(x)^2": "🧮 **SymPy Math Solution:** `1` (Latency: ~1.1ms | $0.00 Cost)",
+  "give me the code structure of python": `🐍 **Standard Python Script Skeleton:**\n\n\`\`\`python\n#!/usr/bin/env python3\n"""\nModule Docstring: High-level overview of the script.\n"""\nimport os\nimport sys\nfrom typing import List, Optional\n\nCONST_VALUE = 42\n\nclass DataProcessor:\n    def __init__(self, name: str):\n        self.name = name\n    \n    def process(self) -> str:\n        return f"Processing {self.name}..."\n\ndef main():\n    processor = DataProcessor("TokenWise")\n    print(processor.process())\n\nif __name__ == "__main__":\n    main()\n\`\`\``,
+  "give me the code structure of java": `☕ **Standard Java Class Structure & Skeleton:**\n\n\`\`\`java\npackage com.tokenwise.app;\n\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Main {\n    private static final String APP_NAME = "TokenWise";\n    private int id;\n\n    public Main(int id) {\n        this.id = id;\n    }\n\n    public static void main(String[] args) {\n        Main instance = new Main(101);\n        System.out.println("Running " + APP_NAME + " ID: " + instance.id);\n    }\n}\n\`\`\``,
+  "give me the code structure of rust": `🦀 **Standard Rust Application Skeleton:**\n\n\`\`\`rust\nuse std::fmt;\n\nstruct AppConfig {\n    port: u16,\n    active: bool,\n}\n\nfn main() {\n    let config = AppConfig { port: 8080, active: true };\n    println!("Starting server on port {}", config.port);\n}\n\`\`\``,
+  "give me the code structure of go": `🐹 **Standard Go Program Skeleton:**\n\n\`\`\`go\npackage main\n\nimport (\n    "fmt"\n    "os"\n)\n\nfunc main() {\n    fmt.Println("TokenWise Go Engine initialized.")\n}\n\`\`\``,
+  "give me the code structure of html": `🌐 **Standard HTML5 Document Structure:**\n\n\`\`\`html\n<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>App Title</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <header><h1>Welcome</h1></header>\n  <main><p>Application Content</p></main>\n  <script src="app.js"></script>\n</body>\n</html>\n\`\`\``,
+  "give me the code structure of react": `⚛️ **Standard React Functional Component Skeleton:**\n\n\`\`\`jsx\nimport React, { useState, useEffect } from 'react';\n\nexport default function UserCard({ username }) {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    console.log("Component mounted");\n  }, []);\n\n  return (\n    <div className="card">\n      <h3>User: {username}</h3>\n      <button onClick={() => setCount(c => c + 1)}>Count: {count}</button>\n    </div>\n  );\n}\n\`\`\``,
+  "give me the structure of a sql query": `🗄️ **Standard SQL Query Order of Execution:**\n\n1. \`FROM\` (Identify tables and JOINs)\n2. \`WHERE\` (Filter individual row records)\n3. \`GROUP BY\` (Aggregate rows into groups)\n4. \`HAVING\` (Filter aggregated groups)\n5. \`SELECT\` (Compute expressions and projection)\n6. \`DISTINCT\` (Deduplicate rows)\n7. \`ORDER BY\` (Sort final result set)\n8. \`LIMIT\` / \`OFFSET\` (Paginate output)`,
+  "why does this python code print 4 4 4 4 4 lambda in loop": "🐛 **Python Late-Binding Closure Bug Fix:**\nBind `i` as default argument inside lambda definition:\n```python\n[lambda x, i=i: i * x for i in range(5)]\n```",
+  "what is the syntax skeleton for a python script": "🐍 **Python Script Skeleton:**\n```python\n#!/usr/bin/env python3\nimport sys\n\ndef main():\n    print('Running TokenWise engine...')\n    return 0\n\nif __name__ == '__main__':\n    sys.exit(main())\n```",
+  "what is the big o time complexity hierarchy from fastest to slowest": "📊 **Big-O Hierarchy:**\n1. O(1) Constant\n2. O(log n) Logarithmic\n3. O(n) Linear\n4. O(n log n) Linearithmic\n5. O(n^2) Quadratic\n6. O(2^n) Exponential\n7. O(n!) Factorial",
   "where is my package": "📦 [Order & Shipping] Your order tracking request has been processed. You can check real-time courier updates in your delivery status panel.",
   "i want a refund": "💳 [Refund & Returns] Your return/refund request has been initiated. Our policy allows returns within 30 days of delivery.",
-  "why does this python code print 4 4 4 4 4 lambda in loop": "🐛 **Python Closure Bug Fix:**\nBind `i` as default argument: `[lambda x, i=i: i * x for i in range(5)]`",
-  "what is the syntax skeleton for a python script": "🐍 **Python Script Skeleton:**\n```python\n#!/usr/bin/env python3\nimport sys\n\ndef main():\n    print('Running TokenWise engine...')\n    return 0\n\nif __name__ == '__main__':\n    sys.exit(main())\n```",
-  "what is the big o time complexity hierarchy from fastest to slowest": "📊 **Big-O Hierarchy:**\n1. O(1) Constant\n2. O(log n) Logarithmic\n3. O(n) Linear\n4. O(n log n) Linearithmic\n5. O(n^2) Quadratic\n6. O(2^n) Exponential\n7. O(n!) Factorial"
+  "cancel my subscription": "❌ [Subscription Management] We have processed your cancellation request. Any remaining active cycle will conclude at the end of the current billing period.",
+  "i was charged twice": "🔒 [Billing & Payment] We've detected a duplicate payment inquiry. Your billing records are being verified with our payment gateway."
 };
+
+// ── CLIENT-SIDE SOLVERS (MATH, GREETINGS, FACTS, WIKIPEDIA) ───
+const CLIENT_FACTS = {
+  "what is pi": "π (pi) = 3.141592653589793",
+  "what is euler": "e (Euler's number) = 2.718281828459045",
+  "speed of light": "Speed of light in vacuum = 299,792,458 m/s (~3 × 10⁸ m/s)",
+  "how many days in a year": "365 days (366 days in a leap year)",
+  "how many months in a year": "12 months",
+  "how many weeks in a year": "52 weeks",
+  "what is gravity": "Standard gravitational acceleration on Earth (g) = 9.80665 m/s²",
+  "boiling point of water": "100°C (212°F / 373.15 K) at 1 atm",
+  "freezing point of water": "0°C (32°F / 273.15 K)",
+  "how many seconds in a day": "86,400 seconds",
+  "how many hours in a day": "24 hours",
+  "what is a byte": "1 byte = 8 bits",
+  "what is a kilobyte": "1 KB = 1,024 bytes (or 1,000 bytes in SI decimal)",
+  "what is a megabyte": "1 MB = 1,024 KB = 1,048,576 bytes",
+  "what is a gigabyte": "1 GB = 1,024 MB = 1,073,741,824 bytes",
+};
+
+const CLIENT_GREETINGS = {
+  "hi": "Hello! How can I help you today?",
+  "hello": "Hi there! What can I do for you?",
+  "hey": "Hey! How can I assist you?",
+  "good morning": "Good morning! How can I help?",
+  "good evening": "Good evening! What do you need?",
+  "good afternoon": "Good afternoon! How can I help?",
+  "thanks": "You're welcome! Let me know if you need anything else.",
+  "thank you": "Happy to help! Feel free to ask more queries.",
+  "bye": "Goodbye! Have a wonderful day!",
+  "goodbye": "Goodbye! Take care!",
+  "who are you": "I am Kuiper, an intelligent multi-layer AI router designed to optimize query execution and minimize LLM costs.",
+};
+
+function solveClientMath(text) {
+  let t = text.toLowerCase().trim().replace(/[?!]$/, '').trim();
+  const triggers = [
+    "calculate the value of", "calculate", "solve", "compute", 
+    "how much is", "evaluate", "simplify", "what is the value of", "what is", "value of"
+  ];
+  for (const tr of triggers) {
+    if (t.startsWith(tr + " ")) {
+      t = t.slice(tr.length).trim();
+      break;
+    } else if (t.startsWith(tr) && t.length > tr.length && " 0123456789(+-/*".includes(t[tr.length])) {
+      t = t.slice(tr.length).trim();
+      break;
+    }
+  }
+
+  // Common trigonometry / symbolic identities
+  if (t === "sinx/cosx" || t === "sin(x)/cos(x)") return "= tan(x)";
+  if (t === "cosx/sinx" || t === "cos(x)/sin(x)") return "= cot(x)";
+  if (t === "sinx/tanx" || t === "sin(x)/tan(x)") return "= cos(x)";
+  if (t === "sin(x)^2 + cos(x)^2" || t === "sin(x)**2 + cos(x)**2" || t === "sin^2(x) + cos^2(x)") return "= 1";
+
+  // Operator normalization
+  let expr = t
+    .replace(/multiplied by/g, "*")
+    .replace(/times/g, "*")
+    .replace(/divided by/g, "/")
+    .replace(/divided/g, "/")
+    .replace(/plus/g, "+")
+    .replace(/minus/g, "-")
+    .replace(/to the power of/g, "**")
+    .replace(/power of/g, "**")
+    .replace(/squared/g, "**2")
+    .replace(/cubed/g, "**3")
+    .replace(/\^/g, "**")
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/");
+
+  // Math functions
+  expr = expr
+    .replace(/pi\b/g, "Math.PI")
+    .replace(/e\b/g, "Math.E")
+    .replace(/sqrt\(([^)]+)\)/g, "Math.sqrt($1)")
+    .replace(/cbrt\(([^)]+)\)/g, "Math.cbrt($1)")
+    .replace(/sin\(([^)]+)\)/g, "Math.sin($1)")
+    .replace(/cos\(([^)]+)\)/g, "Math.cos($1)")
+    .replace(/tan\(([^)]+)\)/g, "Math.tan($1)")
+    .replace(/log\(([^)]+)\)/g, "Math.log10($1)")
+    .replace(/ln\(([^)]+)\)/g, "Math.log($1)")
+    .replace(/abs\(([^)]+)\)/g, "Math.abs($1)");
+
+  // Fast arithmetic check
+  if (/^[\d\s+\-*/.%()Math.PIEsqrtcbrtsincolgabs,**]+$/.test(expr) && /\d/.test(expr)) {
+    try {
+      // eslint-disable-next-line no-new-func
+      const fn = new Function(`"use strict"; return (${expr});`);
+      const val = fn();
+      if (typeof val === "number" && !isNaN(val) && isFinite(val)) {
+        if (Number.isInteger(val)) return `= ${val}`;
+        return `= ${Math.round(val * 100000) / 100000}`;
+      }
+      if (typeof val === "bigint") return `= ${val.toString()}`;
+    } catch {
+      try {
+        if (typeof window !== "undefined" && window.BigInt && /^\d+\s*[+\-*]\s*\d+$/.test(t)) {
+          const parts = t.split(/([+\-*])/);
+          if (parts.length === 3) {
+            const a = window.BigInt(parts[0].trim());
+            const op = parts[1].trim();
+            const b = window.BigInt(parts[2].trim());
+            if (op === "+") return `= ${(a + b).toString()}`;
+            if (op === "-") return `= ${(a - b).toString()}`;
+            if (op === "*") return `= ${(a * b).toString()}`;
+          }
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
+
+function solveClientFactsOrGreetings(text) {
+  const t = text.toLowerCase().trim().replace(/[?!.]$/, '').trim();
+  for (const [g, ans] of Object.entries(CLIENT_GREETINGS)) {
+    if (t === g || t.startsWith(g + " ") || t.startsWith(g)) {
+      return { answer: ans, handled_by: "greeting", layer: "0A", layer_name: "Layer 0A: Query Handler (Greetings)" };
+    }
+  }
+  for (const [f, ans] of Object.entries(CLIENT_FACTS)) {
+    if (t === f || t.includes(f)) {
+      return { answer: ans, handled_by: "facts", layer: "0A", layer_name: "Layer 0A: Query Handler (Facts Database)" };
+    }
+  }
+  return null;
+}
+
+async function fetchClientWikipedia(text) {
+  const stripPhrases = [
+    "tell me about", "tell me who is", "tell me what is",
+    "what do you know about", "what is the capital of",
+    "what is the meaning of", "what is the history of",
+    "what is", "what are", "who is", "who was", "who are",
+    "explain", "define", "what was", "where is", "when was", "when is",
+    "give me info on", "information about", "what does", "capital of"
+  ];
+  let topic = text.toLowerCase().trim().replace(/[?!.]$/, '').trim();
+  for (const phrase of stripPhrases) {
+    if (topic.startsWith(phrase + " ")) {
+      topic = topic.slice(phrase.length).trim();
+      break;
+    } else if (topic.startsWith(phrase)) {
+      topic = topic.slice(phrase.length).trim();
+      break;
+    }
+  }
+  if (!topic || topic.length < 2) return null;
+
+  try {
+    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.extract) {
+        return data.extract;
+      }
+    }
+  } catch (e) {
+    console.warn("Client Wikipedia fetch skipped", e);
+  }
+  return null;
+}
 
 // ── ORBITAL LOGO ───────────────────────────────────────────────
 function OrbitalLogo({ size = 40, animating = false }) {
@@ -237,8 +410,18 @@ export default function App() {
   const [showKey, setShowKey] = useState(false);
   const [provider, setProvider] = useState("auto");
   const [showDash, setShowDash] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth <= 768 : false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" ? window.innerWidth > 768 : false);
   const [showApiModal, setShowApiModal] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     try { sessionStorage.setItem("kuiper_history", JSON.stringify(history)); } catch {}
@@ -249,7 +432,26 @@ export default function App() {
       const res = await axios.get(`${apiUrl}/stats`, { timeout: 2000 });
       setStats(res.data);
       setBackendOnline(true);
+      return;
     } catch {
+      // Auto fallback probe to alternative local host
+      if (apiUrl.includes("127.0.0.1:8000")) {
+        try {
+          const res = await axios.get("http://localhost:8000/stats", { timeout: 1500 });
+          setStats(res.data);
+          setApiUrl("http://localhost:8000");
+          setBackendOnline(true);
+          return;
+        } catch {}
+      } else if (apiUrl.includes("localhost:8000")) {
+        try {
+          const res = await axios.get("http://127.0.0.1:8000/stats", { timeout: 1500 });
+          setStats(res.data);
+          setApiUrl("http://127.0.0.1:8000");
+          setBackendOnline(true);
+          return;
+        } catch {}
+      }
       setBackendOnline(false);
     }
   }, [apiUrl]);
@@ -272,16 +474,16 @@ export default function App() {
     const sequence = ["0A", "0B", "1", "2", "3", "4", "5"];
     for (let i = 0; i < sequence.length; i++) {
       setActiveLayer(sequence[i]);
-      await new Promise(r => setTimeout(r, 60));
+      await new Promise(r => setTimeout(r, 50));
     }
 
     try {
-      // 1. Try Backend API
+      // 1. Try Backend API first
       const res = await axios.post(`${apiUrl}/query`, {
         query: q,
         provider,
         api_key: apiKey || null,
-      }, { timeout: 10000 });
+      }, { timeout: 12000 });
 
       setResult(res.data);
       setActiveLayer(res.data.layer);
@@ -289,28 +491,122 @@ export default function App() {
       setBackendOnline(true);
       checkHealth();
     } catch (err) {
-      // 2. Client-side fallback for standalone GitHub Pages mode
+      // 2. Intelligent Client-Side Cascade Surrogate
       const normalized = q.toLowerCase();
-      let matchedKey = Object.keys(CLIENT_KNOWLEDGE).find(k => normalized.includes(k) || k.includes(normalized));
-      
-      let fallbackData = {
-        query: q,
-        answer: matchedKey ? CLIENT_KNOWLEDGE[matchedKey] : `💡 **Kuiper 7-Layer Interactive Client Response:**\n\nQuery processed via client surrogate engine. For full live multi-model LLM generation (Groq 120B / Gemini Flash), connect your backend at \`${apiUrl}\`.`,
-        handled_by: matchedKey ? (matchedKey.includes("code structure") ? "cache" : "math") : "embedder",
-        layer: matchedKey ? (matchedKey.includes("code structure") ? "2" : "0A") : "3",
-        layer_name: matchedKey ? (matchedKey.includes("code structure") ? "Layer 2: MinHash LSH Cache" : "Layer 0A: Query Handler") : "Layer 3: Semantic Embedder",
-        latency_ms: 3.2,
-        cost_saved: true,
-        confidence: 0.95,
-        alpha: 0.5,
-        price_tier: "normal",
-        steps: [
-          { layer: "0A", name: "Query Handler", status: matchedKey && !matchedKey.includes("code structure") ? "HIT" : "SKIP", latency_ms: 0.8 },
-          { layer: "1", name: "TinyML", status: "SKIP", latency_ms: 0.4 },
-          { layer: "2", name: "MinHash Cache", status: matchedKey && matchedKey.includes("code structure") ? "HIT" : "SKIP", latency_ms: 1.2 },
-          { layer: "3", name: "Embedder", status: !matchedKey ? "HIT" : "SKIP", latency_ms: 2.1 }
-        ]
-      };
+      let fallbackData = null;
+
+      // Layer 0A: Client Math Check
+      const mathAns = solveClientMath(q);
+      if (mathAns) {
+        fallbackData = {
+          query: q,
+          answer: mathAns,
+          handled_by: "math",
+          layer: "0A",
+          layer_name: "Layer 0A: Query Handler (Client Math Engine)",
+          latency_ms: 1.2,
+          cost_saved: true,
+          confidence: 1.0,
+          alpha: 0.5,
+          price_tier: "normal",
+          steps: [
+            { layer: "0A", name: "Query Handler", status: "HIT", latency_ms: 1.2 }
+          ]
+        };
+      }
+
+      // Layer 0A: Client Facts & Greetings Check
+      if (!fallbackData) {
+        const factOrGreet = solveClientFactsOrGreetings(q);
+        if (factOrGreet) {
+          fallbackData = {
+            query: q,
+            answer: factOrGreet.answer,
+            handled_by: factOrGreet.handled_by,
+            layer: factOrGreet.layer,
+            layer_name: factOrGreet.layer_name,
+            latency_ms: 0.8,
+            cost_saved: true,
+            confidence: 1.0,
+            alpha: 0.5,
+            price_tier: "normal",
+            steps: [
+              { layer: "0A", name: "Query Handler", status: "HIT", latency_ms: 0.8 }
+            ]
+          };
+        }
+      }
+
+      // Layer 0B: Client Live Wikipedia Fetch
+      if (!fallbackData) {
+        const wikiExtract = await fetchClientWikipedia(q);
+        if (wikiExtract) {
+          fallbackData = {
+            query: q,
+            answer: wikiExtract,
+            handled_by: "wikipedia",
+            layer: "0B",
+            layer_name: "Layer 0B: General Knowledge (Wikipedia REST)",
+            latency_ms: 480.0,
+            cost_saved: true,
+            confidence: 1.0,
+            alpha: 0.5,
+            price_tier: "normal",
+            steps: [
+              { layer: "0A", name: "Query Handler", status: "SKIP", latency_ms: 0.2 },
+              { layer: "0B", name: "General Knowledge", status: "HIT", latency_ms: 480.0 }
+            ]
+          };
+        }
+      }
+
+      // Layer 2/3/4: Client Knowledge Surrogate Repository
+      if (!fallbackData) {
+        let matchedKey = Object.keys(CLIENT_KNOWLEDGE).find(k => normalized.includes(k) || k.includes(normalized));
+        if (matchedKey) {
+          const isCode = matchedKey.includes("code structure") || matchedKey.includes("skeleton");
+          fallbackData = {
+            query: q,
+            answer: CLIENT_KNOWLEDGE[matchedKey],
+            handled_by: isCode ? "cache" : "tinyml",
+            layer: isCode ? "2" : "1",
+            layer_name: isCode ? "Layer 2: MinHash LSH Cache" : "Layer 1: TinyML Classifier",
+            latency_ms: 2.4,
+            cost_saved: true,
+            confidence: 0.95,
+            alpha: 0.5,
+            price_tier: "normal",
+            steps: [
+              { layer: "0A", name: "Query Handler", status: "SKIP", latency_ms: 0.3 },
+              { layer: "0B", name: "General Knowledge", status: "SKIP", latency_ms: 0.4 },
+              { layer: isCode ? "2" : "1", name: isCode ? "MinHash Cache" : "TinyML", status: "HIT", latency_ms: 1.7 }
+            ]
+          };
+        }
+      }
+
+      // Default Surrogate Resolution
+      if (!fallbackData) {
+        fallbackData = {
+          query: q,
+          answer: `💡 **Kuiper 7-Layer Intelligent Client Response:**\n\nQuery processed via client surrogate engine. For full live multi-model LLM generation (Groq 120B / Gemini Flash), ensure your backend is active at \`${apiUrl}\`.`,
+          handled_by: "embedder",
+          layer: "3",
+          layer_name: "Layer 3: Semantic Embedder",
+          latency_ms: 3.5,
+          cost_saved: true,
+          confidence: 0.85,
+          alpha: 0.5,
+          price_tier: "normal",
+          steps: [
+            { layer: "0A", name: "Query Handler", status: "SKIP", latency_ms: 0.4 },
+            { layer: "0B", name: "General Knowledge", status: "SKIP", latency_ms: 0.6 },
+            { layer: "1", name: "TinyML", status: "SKIP", latency_ms: 0.3 },
+            { layer: "2", name: "MinHash Cache", status: "SKIP", latency_ms: 0.5 },
+            { layer: "3", name: "Embedder", status: "HIT", latency_ms: 1.7 }
+          ]
+        };
+      }
 
       setResult(fallbackData);
       setActiveLayer(fallbackData.layer);
@@ -324,36 +620,83 @@ export default function App() {
   const layerInfo = result ? LAYER_INFO[result.handled_by] || LAYER_INFO.unknown : null;
 
   return (
-    <div style={{ minHeight: "100vh", color: "#ffffff", fontFamily: "'Inter', system-ui, -apple-system, sans-serif", display: "flex", position: "relative" }}>
+    <div style={{ minHeight: "100vh", color: "#ffffff", fontFamily: "'Inter', system-ui, -apple-system, sans-serif", display: "flex", position: "relative", overflowX: "hidden" }}>
       <KuiperBackground />
 
-      {/* ── LEFT SIDEBAR ── */}
-      <div style={{
-          width: sidebarOpen ? 260 : 0, minWidth: sidebarOpen ? 260 : 0,
-          height: "100vh", position: "sticky", top: 0,
-          background: "#00000085", backdropFilter: "blur(24px)",
-          borderRight: sidebarOpen ? "1px solid #ffffff12" : "none",
-          display: "flex", flexDirection: "column",
-          overflow: "hidden", zIndex: 20, flexShrink: 0,
-          transition: "width 0.3s ease, min-width 0.3s ease"
+      {/* ── MOBILE BACKDROP OVERLAY ── */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.7)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            zIndex: 45,
+            transition: "opacity 0.3s ease"
+          }}
+        />
+      )}
+
+      {/* ── SIDEBAR DRAWER ── */}
+      <div
+        style={{
+          width: isMobile ? 280 : (sidebarOpen ? 260 : 0),
+          minWidth: isMobile ? undefined : (sidebarOpen ? 260 : 0),
+          maxWidth: "85vw",
+          height: "100vh",
+          position: isMobile ? "fixed" : "sticky",
+          top: 0,
+          left: 0,
+          transform: isMobile ? (sidebarOpen ? "translateX(0)" : "translateX(-100%)") : "none",
+          background: "#050b18f0",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderRight: (isMobile || sidebarOpen) ? "1px solid #ffffff15" : "none",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          zIndex: isMobile ? 50 : 20,
+          flexShrink: 0,
+          transition: isMobile ? "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)" : "width 0.3s ease, min-width 0.3s ease",
+          boxShadow: isMobile && sidebarOpen ? "6px 0 30px rgba(0,0,0,0.8)" : "none"
         }}>
-        <div style={{ width: 260, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+        <div style={{ width: isMobile ? "100%" : 260, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
           
           {/* Logo header */}
-          <div style={{ padding: "18px 16px 14px", borderBottom: "1px solid #ffffff10", display: "flex", alignItems: "center", gap: 10 }}>
-            <OrbitalLogo size={32} animating={loading} />
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 800, background: "linear-gradient(90deg, #FFFFFF, #F59E0B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                TokenWise
-              </div>
-              <div style={{ fontSize: 9, color: "#ffffff40", letterSpacing: "1.5px" }}>
-                KUIPER 7-LAYER ROUTER
+          <div style={{ padding: "16px 14px", borderBottom: "1px solid #ffffff10", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <OrbitalLogo size={32} animating={loading} />
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, background: "linear-gradient(90deg, #FFFFFF, #F59E0B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  TokenWise
+                </div>
+                <div style={{ fontSize: 9, color: "#ffffff40", letterSpacing: "1.5px" }}>
+                  KUIPER 7-LAYER ROUTER
+                </div>
               </div>
             </div>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close sidebar"
+                style={{
+                  background: "#ffffff12",
+                  border: "1px solid #ffffff20",
+                  borderRadius: 8,
+                  color: "#ffffff",
+                  padding: "4px 8px",
+                  fontSize: 13,
+                  cursor: "pointer"
+                }}>
+                ✕
+              </button>
+            )}
           </div>
 
           {/* Architecture Legend */}
-          <div style={{ padding: "12px 16px 6px", fontSize: 9, color: "#ffffff40", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+          <div style={{ padding: "12px 14px 6px", fontSize: 9, color: "#ffffff40", letterSpacing: "1.5px", textTransform: "uppercase" }}>
             CASCADE LAYERS
           </div>
           <div style={{ padding: "0 10px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
@@ -372,7 +715,7 @@ export default function App() {
           </div>
 
           {/* History label */}
-          <div style={{ padding: "10px 16px 6px", borderTop: "1px solid #ffffff10", fontSize: 9, color: "#ffffff40", letterSpacing: "1.5px" }}>
+          <div style={{ padding: "10px 14px 6px", borderTop: "1px solid #ffffff10", fontSize: 9, color: "#ffffff40", letterSpacing: "1.5px" }}>
             RECENT TRACES ({history.length})
           </div>
 
@@ -388,7 +731,12 @@ export default function App() {
               const isActive = result?.query === h.query;
               return (
                 <div key={`${h.query}-${i}`}
-                  onClick={() => { setQuery(h.query); setResult(h); setActiveLayer(h.layer); }}
+                  onClick={() => {
+                    setQuery(h.query);
+                    setResult(h);
+                    setActiveLayer(h.layer);
+                    if (isMobile) setSidebarOpen(false);
+                  }}
                   className="hover-scale"
                   style={{
                     padding: "8px 10px", borderRadius: 8, marginBottom: 3,
@@ -411,54 +759,103 @@ export default function App() {
       </div>
 
       {/* ── MAIN WORKSPACE ── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative", zIndex: 1 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative", zIndex: 1, minWidth: 0 }}>
         
         {/* Top Header */}
-        <div style={{ padding: "10px 24px", borderBottom: "1px solid #ffffff12", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#00000060", backdropFilter: "blur(20px)", flexShrink: 0 }}>
-          <button onClick={() => setSidebarOpen(p => !p)}
-            className="hover-scale"
-            style={{ background: "none", border: "none", color: "#ffffff80", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>
-            ☰
-          </button>
-
-          {/* Mode & Status */}
+        <div style={{
+          padding: isMobile ? "8px 12px" : "10px 24px",
+          borderBottom: "1px solid #ffffff12",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          background: "#00000060",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          flexShrink: 0
+        }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => setSidebarOpen(p => !p)}
+              className="hover-scale"
+              aria-label="Toggle sidebar"
+              style={{
+                background: "#ffffff10",
+                border: "1px solid #ffffff15",
+                borderRadius: 8,
+                color: "#ffffff",
+                fontSize: 16,
+                cursor: "pointer",
+                padding: "6px 10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+              ☰
+            </button>
+            {isMobile && (
+              <div style={{ fontSize: 14, fontWeight: 800, background: "linear-gradient(90deg, #FFFFFF, #F59E0B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                TokenWise
+              </div>
+            )}
+          </div>
+
+          {/* Mode & Status Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button onClick={() => setShowApiModal(p => !p)}
               className="hover-scale"
               style={{
-                display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 20,
-                fontSize: 11, fontWeight: 600, cursor: "pointer",
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: isMobile ? "5px 8px" : "5px 12px",
+                borderRadius: 20,
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: 600,
+                cursor: "pointer",
                 background: backendOnline ? "#10B98120" : "#F59E0B20",
                 border: `1px solid ${backendOnline ? "#10B98160" : "#F59E0B60"}`,
                 color: backendOnline ? "#10B981" : "#F59E0B"
               }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: backendOnline ? "#10B981" : "#F59E0B" }}/>
-              {backendOnline ? "Backend Live (7-Layer)" : "GitHub Pages Engine"} ⚙️
+              {backendOnline ? (isMobile ? "Live" : "Backend Live (7-Layer)") : (isMobile ? "GH Engine" : "GitHub Pages Engine")} ⚙️
             </button>
 
             <button onClick={() => setShowDash(p => !p)}
               className="hover-scale"
               style={{
-                padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+                padding: isMobile ? "5px 8px" : "7px 14px",
+                borderRadius: 8,
+                cursor: "pointer",
                 border: `1px solid ${showDash ? "#F59E0B" : "#ffffff25"}`,
                 background: showDash ? "#F59E0B25" : "#ffffff08",
-                color: showDash ? "#F59E0B" : "#ffffff90", fontSize: 12, fontWeight: 600
+                color: showDash ? "#F59E0B" : "#ffffff90",
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: 600
               }}>
-              📊 Cost & Alpha Matrix
+              📊 {isMobile ? "Alpha" : "Cost & Alpha Matrix"}
             </button>
           </div>
         </div>
 
         {/* API Endpoint Config Modal */}
         {showApiModal && (
-          <div style={{ background: "#0c1222", borderBottom: "1px solid #ffffff20", padding: "12px 24px", display: "flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
-            <span style={{ fontSize: 12, color: "#ffffff80" }}>🔗 Backend API Endpoint:</span>
+          <div style={{
+            background: "#0c1222f5",
+            backdropFilter: "blur(16px)",
+            borderBottom: "1px solid #ffffff20",
+            padding: "12px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+            justifyContent: "center"
+          }}>
+            <span style={{ fontSize: 11, color: "#ffffff80" }}>🔗 Backend API:</span>
             <input value={apiUrl} onChange={e => setApiUrl(e.target.value)}
               placeholder="http://127.0.0.1:8000"
-              style={{ padding: "6px 12px", borderRadius: 8, background: "#ffffff15", border: "1px solid #ffffff30", color: "#ffffff", fontSize: 12, width: 280 }}/>
+              style={{ padding: "6px 10px", borderRadius: 8, background: "#ffffff15", border: "1px solid #ffffff30", color: "#ffffff", fontSize: 12, width: isMobile ? "100%" : 260, maxWidth: "100%" }}/>
             <button onClick={() => { checkHealth(); setShowApiModal(false); }}
               className="hover-scale"
-              style={{ padding: "6px 14px", borderRadius: 8, background: "#10B981", border: "none", color: "#ffffff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+              style={{ padding: "6px 12px", borderRadius: 8, background: "#10B981", border: "none", color: "#ffffff", fontSize: 11, fontWeight: 700, cursor: "pointer", width: isMobile ? "100%" : "auto" }}>
               Save & Connect
             </button>
           </div>
@@ -474,26 +871,56 @@ export default function App() {
         )}
 
         {/* Center Content */}
-        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px 32px" }}>
+        <div style={{
+          flex: 1,
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: isMobile ? "16px 12px 32px" : "28px 24px 32px",
+          width: "100%",
+          paddingBottom: "calc(32px + var(--safe-bottom))"
+        }}>
           
           {/* Hero */}
-          <div className="animate-fade-in" style={{ textAlign: "center", marginBottom: 20 }}>
-            <OrbitalLogo size={48} animating={loading} />
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.5px", marginTop: 10, marginBottom: 4, background: "linear-gradient(135deg, #FFFFFF, #F59E0B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <div className="animate-fade-in" style={{ textAlign: "center", marginBottom: isMobile ? 14 : 20, width: "100%", maxWidth: 640 }}>
+            <OrbitalLogo size={isMobile ? 38 : 46} animating={loading} />
+            <div style={{
+              fontSize: isMobile ? 22 : 30,
+              fontWeight: 800,
+              letterSpacing: "-0.5px",
+              marginTop: 8,
+              marginBottom: 4,
+              background: "linear-gradient(135deg, #FFFFFF, #F59E0B)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}>
               TokenWise Intelligent Router
             </div>
-            <div style={{ fontSize: 13, color: "#ffffff70", maxWidth: 540, margin: "0 auto" }}>
-              7-Layer cascaded AI optimization engine. Instant free resolution for code structures, math, and support queries.
+            <div style={{ fontSize: isMobile ? 12 : 13, color: "#ffffff70", maxWidth: 540, margin: "0 auto", lineHeight: 1.5 }}>
+              7-Layer cascaded AI semantic optimization engine. Instant free resolution for math, entities, code templates, and support queries.
             </div>
           </div>
 
           {/* Main Input Stack */}
-          <div style={{ width: "100%", maxWidth: 780, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ width: "100%", maxWidth: 780, display: "flex", flexDirection: "column", gap: 10 }}>
             
             {/* Provider and Inbuilt Key Selector */}
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "stretch", flexDirection: isMobile ? "column" : "row" }}>
               <select value={provider} onChange={e => setProvider(e.target.value)}
-                style={{ padding: "10px 14px", borderRadius: 10, background: "#ffffff12", border: "1px solid #ffffff25", color: "#ffffff", fontSize: 13, cursor: "pointer", outline: "none", backdropFilter: "blur(10px)" }}>
+                style={{
+                  padding: isMobile ? "10px 12px" : "10px 14px",
+                  borderRadius: 10,
+                  background: "#ffffff12",
+                  border: "1px solid #ffffff25",
+                  color: "#ffffff",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  outline: "none",
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  width: isMobile ? "100%" : "auto"
+                }}>
                 {LLM_PROVIDERS.map(p => (
                   <option key={p.id} value={p.id} style={{ background: "#111827" }}>
                     {p.label}
@@ -501,19 +928,42 @@ export default function App() {
                 ))}
               </select>
 
-              <div style={{ flex: 1, background: "#ffffff12", borderRadius: 10, border: "1px solid #ffffff20", padding: "8px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 14 }}>🔑</span>
-                <input type={showKey ? "text" : "password"} value={apiKey} onChange={e => setApiKey(e.target.value)}
+              <div style={{
+                flex: 1,
+                background: "#ffffff12",
+                borderRadius: 10,
+                border: "1px solid #ffffff20",
+                padding: "8px 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                minWidth: 0
+              }}>
+                <span style={{ fontSize: 13, flexShrink: 0 }}>🔑</span>
+                <input
+                  type={showKey ? "text" : "password"}
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
                   placeholder={currentProvider?.placeholder || "Automatic optimal model selection"}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "#ffffff", fontSize: 12, fontFamily: "monospace" }}/>
+                  style={{
+                    flex: 1,
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "#ffffff",
+                    fontSize: 12,
+                    fontFamily: "monospace",
+                    minWidth: 0
+                  }}
+                />
                 
                 {currentProvider?.badge && !apiKey && (
-                  <span style={{ padding: "3px 8px", borderRadius: 12, background: "#10B98120", border: "1px solid #10B98160", color: "#10B981", fontSize: 10, fontWeight: 700 }}>
+                  <span style={{ padding: "2px 6px", borderRadius: 10, background: "#10B98120", border: "1px solid #10B98160", color: "#10B981", fontSize: 9, fontWeight: 700, flexShrink: 0 }}>
                     {currentProvider.badge}
                   </span>
                 )}
                 {apiKey && (
-                  <button onClick={() => setShowKey(p => !p)} style={{ background: "none", border: "none", color: "#ffffff60", cursor: "pointer", fontSize: 11 }}>
+                  <button onClick={() => setShowKey(p => !p)} style={{ background: "none", border: "none", color: "#ffffff60", cursor: "pointer", fontSize: 11, flexShrink: 0 }}>
                     {showKey ? "Hide" : "Show"}
                   </button>
                 )}
@@ -521,54 +971,85 @@ export default function App() {
             </div>
 
             {/* Query Input Field */}
-            <div style={{ display: "flex", gap: 10 }}>
-              <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
-                placeholder="Ask anything (e.g. give me the code structure of c++, calculate sinx/cosx)..."
-                style={{ flex: 1, padding: "14px 18px", borderRadius: 12, border: "1px solid #ffffff30", background: "#ffffff18", color: "#ffffff", fontSize: 15, outline: "none", backdropFilter: "blur(12px)" }}/>
-              <button onClick={() => handleQuery()} disabled={loading}
+            <div style={{ display: "flex", gap: 8, flexDirection: isMobile ? "column" : "row" }}>
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Ask anything (e.g. who is emma watson, 29383598235+1)..."
+                style={{
+                  flex: 1,
+                  padding: isMobile ? "12px 14px" : "14px 18px",
+                  borderRadius: 12,
+                  border: "1px solid #ffffff30",
+                  background: "#ffffff18",
+                  color: "#ffffff",
+                  fontSize: 15,
+                  outline: "none",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  width: "100%"
+                }}
+              />
+              <button
+                onClick={() => handleQuery()}
+                disabled={loading}
                 className="hover-scale"
                 style={{
-                  padding: "14px 24px", borderRadius: 12, border: "none",
+                  padding: isMobile ? "12px 18px" : "14px 24px",
+                  borderRadius: 12,
+                  border: "none",
                   background: loading ? "#ffffff20" : "linear-gradient(135deg, #F59E0B, #D97706)",
-                  color: "#ffffff", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-                  boxShadow: "0 0 20px #F59E0B33", whiteSpace: "nowrap"
+                  color: "#ffffff",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  boxShadow: "0 0 20px #F59E0B33",
+                  whiteSpace: "nowrap",
+                  width: isMobile ? "100%" : "auto"
                 }}>
                 {loading ? "Cascading..." : "Run Query →"}
               </button>
             </div>
 
             {/* Pipeline Visualizer (All 7 Layers) */}
-            <div style={{ background: "#ffffff0a", borderRadius: 12, border: "1px solid #ffffff15", padding: "12px 16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 10, color: "#ffffff60", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+            <div style={{ background: "#ffffff0a", borderRadius: 12, border: "1px solid #ffffff15", padding: isMobile ? "10px 12px" : "12px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
+                <span style={{ fontSize: 9, color: "#ffffff60", letterSpacing: "1.2px", textTransform: "uppercase" }}>
                   7-LAYER CASCADE PIPELINE
                 </span>
-                <span style={{ fontSize: 10, color: "#F59E0B" }}>
-                  ⚡ Free Local Layers (0A ➔ 4) | 🧠 Auto-LLM (5)
+                <span style={{ fontSize: 9, color: "#F59E0B" }}>
+                  ⚡ Free Local (0A➔4) | 🧠 Auto-LLM (5)
                 </span>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(95px, 1fr))", gap: 6 }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "repeat(auto-fit, minmax(76px, 1fr))" : "repeat(auto-fit, minmax(95px, 1fr))",
+                gap: isMobile ? 4 : 6
+              }}>
                 {LAYERS.map(layer => {
                   const isActive = activeLayer === layer.id;
                   const isMatch = result && result.layer === layer.id;
                   return (
                     <div key={layer.id}
                       style={{
-                        padding: "8px 10px", borderRadius: 8,
+                        padding: isMobile ? "6px 6px" : "8px 10px",
+                        borderRadius: 8,
                         background: isMatch ? `${layer.color}35` : isActive ? `${layer.color}18` : "#ffffff05",
                         border: `1px solid ${isMatch ? layer.color : isActive ? `${layer.color}60` : "#ffffff0d"}`,
-                        textAlign: "center", transition: "all 0.2s ease",
-                        transform: isMatch ? "scale(1.04)" : "none",
+                        textAlign: "center",
+                        transition: "all 0.2s ease",
+                        transform: isMatch ? "scale(1.03)" : "none",
                         boxShadow: isMatch ? `0 0 16px ${layer.color}80` : "none"
                       }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: isMatch ? "#FFFFFF" : layer.color }}>
+                      <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 800, color: isMatch ? "#FFFFFF" : layer.color }}>
                         {layer.icon} {layer.id}
                       </div>
-                      <div style={{ fontSize: 9, color: "#ffffff80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <div style={{ fontSize: 8, color: "#ffffff80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {layer.label}
                       </div>
-                      <div style={{ fontSize: 8, color: layer.cost.includes("FREE") ? "#10B981" : "#EF4444", fontWeight: 700, marginTop: 2 }}>
+                      <div style={{ fontSize: 7.5, color: layer.cost.includes("FREE") ? "#10B981" : "#EF4444", fontWeight: 700, marginTop: 2 }}>
                         {layer.cost}
                       </div>
                     </div>
@@ -579,11 +1060,26 @@ export default function App() {
 
             {/* Quick Sample Prompts */}
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-              <span style={{ fontSize: 11, color: "#ffffff50", marginRight: 4 }}>Try:</span>
+              <span style={{ fontSize: 11, color: "#ffffff50", marginRight: 2 }}>Try:</span>
               {SAMPLE_QUERIES.map((s, idx) => (
-                <button key={idx} onClick={() => { setQuery(s.text); handleQuery(s.text); }}
+                <button key={idx}
+                  onClick={() => {
+                    setQuery(s.text);
+                    handleQuery(s.text);
+                    if (isMobile) {
+                      window.scrollTo({ top: 300, behavior: "smooth" });
+                    }
+                  }}
                   className="hover-scale"
-                  style={{ padding: "4px 10px", borderRadius: 16, background: "#ffffff08", border: "1px solid #ffffff15", color: "#ffffff90", fontSize: 11, cursor: "pointer" }}>
+                  style={{
+                    padding: "4px 9px",
+                    borderRadius: 16,
+                    background: "#ffffff08",
+                    border: "1px solid #ffffff15",
+                    color: "#ffffff90",
+                    fontSize: 10.5,
+                    cursor: "pointer"
+                  }}>
                   {s.label}
                 </button>
               ))}
@@ -591,9 +1087,9 @@ export default function App() {
           </div>
 
           {/* ── RESULT CARD ── */}
-          <div style={{ width: "100%", maxWidth: 780, marginTop: 18 }}>
+          <div style={{ width: "100%", maxWidth: 780, marginTop: 14 }}>
             {error && (
-              <div className="animate-fade-in" style={{ background: "#EF444415", border: "1px solid #EF444460", borderRadius: 12, padding: "14px 18px", color: "#EF4444", marginBottom: 16, fontSize: 14 }}>
+              <div className="animate-fade-in" style={{ background: "#EF444415", border: "1px solid #EF444460", borderRadius: 12, padding: "14px 18px", color: "#EF4444", marginBottom: 16, fontSize: 13 }}>
                 ⚠️ {error}
               </div>
             )}
@@ -601,34 +1097,39 @@ export default function App() {
             {result && layerInfo && (
               <div className="animate-fade-in"
                 style={{
-                  background: "#00000085", borderRadius: 16,
+                  background: "#00000085",
+                  borderRadius: 16,
                   border: `1px solid ${layerInfo.color}60`,
-                  padding: "22px", backdropFilter: "blur(24px)",
-                  boxShadow: `0 0 35px ${layerInfo.color}20`
+                  padding: isMobile ? "16px" : "22px",
+                  backdropFilter: "blur(24px)",
+                  WebkitBackdropFilter: "blur(24px)",
+                  boxShadow: `0 0 35px ${layerInfo.color}20`,
+                  wordBreak: "break-word",
+                  overflowWrap: "anywhere"
                 }}>
                 
                 {/* Top Bar of Result */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-                  <div style={{ padding: "5px 12px", borderRadius: 20, background: layerInfo.color, color: "#000000", fontSize: 12, fontWeight: 800 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                  <div style={{ padding: "4px 10px", borderRadius: 20, background: layerInfo.color, color: "#000000", fontSize: 11, fontWeight: 800 }}>
                     {layerInfo.icon} {result.layer_name || layerInfo.label}
                   </div>
 
-                  <div style={{ color: "#ffffff90", fontSize: 12 }}>
+                  <div style={{ color: "#ffffff90", fontSize: 11 }}>
                     ⚡ Latency: <strong>{result.latency_ms}ms</strong>
                   </div>
 
                   {result.cost_saved ? (
-                    <div style={{ padding: "4px 12px", borderRadius: 20, background: "#10B98120", border: "1px solid #10B98180", color: "#10B981", fontSize: 11, fontWeight: 700 }}>
+                    <div style={{ padding: "3px 10px", borderRadius: 20, background: "#10B98120", border: "1px solid #10B98180", color: "#10B981", fontSize: 10.5, fontWeight: 700 }}>
                       💰 100% Cost Saved (Free Layer)
                     </div>
                   ) : (
-                    <div style={{ padding: "4px 12px", borderRadius: 20, background: "#EF444420", border: "1px solid #EF444480", color: "#EF4444", fontSize: 11, fontWeight: 700 }}>
+                    <div style={{ padding: "3px 10px", borderRadius: 20, background: "#EF444420", border: "1px solid #EF444480", color: "#EF4444", fontSize: 10.5, fontWeight: 700 }}>
                       🧠 Auto-LLM ({result.model || provider})
                     </div>
                   )}
 
                   {result.tokens && (
-                    <span style={{ fontSize: 11, color: "#ffffff60" }}>
+                    <span style={{ fontSize: 10.5, color: "#ffffff60" }}>
                       Tokens: {result.tokens}
                     </span>
                   )}
@@ -636,31 +1137,46 @@ export default function App() {
 
                 {/* Auto Model Selection Reason */}
                 {result.selection_reason && (
-                  <div style={{ marginBottom: 10, padding: "6px 12px", borderRadius: 8, background: "#3B82F615", border: "1px solid #3B82F640", fontSize: 11, color: "#93C5FD" }}>
-                    🎯 <strong>Optimal Model Selected:</strong> {result.selection_reason}
+                  <div style={{ marginBottom: 10, padding: "6px 10px", borderRadius: 8, background: "#3B82F615", border: "1px solid #3B82F640", fontSize: 11, color: "#93C5FD" }}>
+                    🎯 <strong>Optimal Model:</strong> {result.selection_reason}
                   </div>
                 )}
 
                 {/* Query Question */}
-                <div style={{ fontSize: 13, color: "#ffffff70", marginBottom: 8, fontStyle: "italic" }}>
+                <div style={{ fontSize: 12, color: "#ffffff70", marginBottom: 8, fontStyle: "italic" }}>
                   "{result.query}"
                 </div>
 
                 {/* Answer Text */}
-                <div style={{ fontSize: 14, fontWeight: 400, lineHeight: 1.7, color: "#FFFFFF", marginBottom: 14, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                <div style={{
+                  fontSize: isMobile ? 13.5 : 14,
+                  fontWeight: 400,
+                  lineHeight: 1.65,
+                  color: "#FFFFFF",
+                  marginBottom: 14,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word"
+                }}>
                   {result.answer}
                 </div>
 
                 {/* Step Breakdown */}
                 {result.steps && result.steps.length > 0 && (
-                  <div style={{ background: "#ffffff05", border: "1px solid #ffffff0a", borderRadius: 10, padding: "8px 12px", marginBottom: 12 }}>
-                    <div style={{ fontSize: 10, color: "#ffffff50", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
+                  <div style={{ background: "#ffffff05", border: "1px solid #ffffff0a", borderRadius: 10, padding: "8px 10px", marginBottom: 12 }}>
+                    <div style={{ fontSize: 9.5, color: "#ffffff50", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
                       Execution Trace Cascade
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                       {result.steps.map((st, idx) => (
-                        <div key={idx} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: st.status === "HIT" ? "#10B98125" : st.status === "INVOKED" ? "#EF444425" : "#ffffff08", border: `1px solid ${st.status === "HIT" ? "#10B98160" : st.status === "INVOKED" ? "#EF444460" : "#ffffff10"}`, color: st.status === "HIT" ? "#10B981" : st.status === "INVOKED" ? "#EF4444" : "#ffffff60" }}>
-                          Layer {st.layer}: {st.name} ➔ <strong>{st.status}</strong> ({st.latency_ms}ms)
+                        <div key={idx} style={{
+                          fontSize: 10,
+                          padding: "2px 7px",
+                          borderRadius: 6,
+                          background: st.status === "HIT" ? "#10B98125" : st.status === "INVOKED" ? "#EF444425" : "#ffffff08",
+                          border: `1px solid ${st.status === "HIT" ? "#10B98160" : st.status === "INVOKED" ? "#EF444460" : "#ffffff10"}`,
+                          color: st.status === "HIT" ? "#10B981" : st.status === "INVOKED" ? "#EF4444" : "#ffffff60"
+                        }}>
+                          L{st.layer}: {st.name} ➔ <strong>{st.status}</strong> ({st.latency_ms}ms)
                         </div>
                       ))}
                     </div>
@@ -668,7 +1184,7 @@ export default function App() {
                 )}
 
                 {/* Bottom Meta */}
-                <div style={{ display: "flex", gap: 16, fontSize: 11, color: "#ffffff60", borderTop: "1px solid #ffffff10", paddingTop: 10 }}>
+                <div style={{ display: "flex", gap: 12, fontSize: 10.5, color: "#ffffff60", borderTop: "1px solid #ffffff10", paddingTop: 8, flexWrap: "wrap" }}>
                   <span>Active α: <strong>{result.alpha}</strong></span>
                   <span>Price Tier: <strong>{result.price_tier}</strong></span>
                   <span>Confidence: <strong>{result.confidence ? `${Math.round(result.confidence * 100)}%` : "100%"}</strong></span>

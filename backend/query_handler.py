@@ -5,22 +5,41 @@ from sympy import sin, cos, tan, cot, sec, csc, sqrt, exp, log, pi, E, I, oo
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 # ── 1. MATH SOLVER (NUMERICAL & SYMBOLIC) ─────────────────────
-MATH_TRIGGERS = ["calculate", "solve", "compute", "how much is", "evaluate", "simplify", "what is", "value of"]
+MATH_TRIGGERS = [
+    "calculate the value of", "calculate", "solve", "compute", "how much is", 
+    "evaluate", "simplify", "what is the value of", "what is", "value of"
+]
 
-# Math symbols / functions allowed in math expressions
 MATH_FUNCS = ["sin", "cos", "tan", "cot", "sec", "csc", "sqrt", "log", "ln", "exp", "abs", "factorial", "pi", "rad", "deg"]
 
 def _preprocess_math_str(s):
     t = s.lower().strip()
     for trigger in MATH_TRIGGERS:
-        if t.startswith(trigger):
+        if t.startswith(trigger + " "):
+            t = t[len(trigger):].strip()
+            break
+        elif t.startswith(trigger) and len(t) > len(trigger) and t[len(trigger)] in " 0123456789(+-/*":
             t = t[len(trigger):].strip()
             break
     
     t = t.rstrip('?').strip()
+    
+    # Word-to-operator normalization
+    t = t.replace("multiplied by", "*")
+    t = t.replace("times", "*")
+    t = t.replace("divided by", "/")
+    t = t.replace("divided", "/")
+    t = t.replace("plus", "+")
+    t = t.replace("minus", "-")
+    t = t.replace("to the power of", "**")
+    t = t.replace("power of", "**")
+    t = t.replace("squared", "**2")
+    t = t.replace("cubed", "**3")
+    t = t.replace("square root of", "sqrt")
+    t = t.replace("cube root of", "cbrt")
     t = t.replace('^', '**').replace('×', '*').replace('÷', '/')
     
-    # Fix common shorthand like sinx -> sin(x), cosx -> cos(x), tanx -> tan(x)
+    # Fix shorthand like sinx -> sin(x), cosx -> cos(x), tanx -> tan(x)
     t = re.sub(r'\b(sin|cos|tan|cot|sec|csc|log|ln|sqrt)\s*([a-zA-Z0-9]+)\b', r'\1(\2)', t)
     # Fix ln -> log
     t = re.sub(r'\bln\(', 'log(', t)
@@ -29,31 +48,54 @@ def _preprocess_math_str(s):
 def _is_math(text):
     t = text.lower().strip().rstrip('?')
     for trigger in MATH_TRIGGERS:
-        if t.startswith(trigger):
+        if t.startswith(trigger + " "):
+            t = t[len(trigger):].strip()
+            break
+        elif t.startswith(trigger) and len(t) > len(trigger) and t[len(trigger)] in " 0123456789(+-/*":
             t = t[len(trigger):].strip()
             break
     
-    # Check for trigonometric or calculus words
     has_math_func = any(re.search(rf'\b{fn}\b|\b{fn}\(', t) for fn in MATH_FUNCS) or any(fn in t for fn in ["sinx", "cosx", "tanx", "cotx", "secx", "cscx"])
     has_digit = bool(re.search(r'\d', t))
     has_operator = bool(re.search(r'[\+\-\*\/\^\%\(\)\=]', t))
-    has_word_op = any(w in t.split() for w in ["plus", "minus", "times", "divided", "squared", "sqrt", "derivative", "integral", "factor"])
+    has_word_op = any(w in t.split() for w in ["plus", "minus", "times", "divided", "squared", "cubed", "sqrt", "derivative", "integral", "factor"])
 
-    # If it contains math functions or arithmetic operators with digits/variables
-    return has_math_func or (has_digit and has_operator) or has_word_op
+    # Must have either a distinct math function or digit with operator/word op
+    if has_math_func:
+        return True
+    if has_digit and (has_operator or has_word_op):
+        return True
+    if has_word_op and (has_digit or any(c in t for c in "xyz")):
+        return True
+
+    return False
 
 def _solve_math(text):
     t = _preprocess_math_str(text)
     if not t:
         return None
 
-    # Replace word operators if present
-    t = t.replace("plus", "+").replace("minus", "-").replace("times", "*").replace("divided by", "/").replace("divided", "/").replace("squared", "**2")
+    # First try safe python eval for purely numeric expressions
+    try:
+        clean_arith = t.replace(' ', '')
+        if re.match(r'^[\d\+\-\*\/\.\(\)\%\*\*]+$', clean_arith):
+            val = eval(clean_arith, {"__builtins__": None}, {})
+            if isinstance(val, (int, float)):
+                if isinstance(val, float) and val.is_integer():
+                    return str(int(val))
+                return str(val)
+    except Exception:
+        pass
 
     transformations = (standard_transformations + (implicit_multiplication_application,))
     try:
         # Try symbolic simplification
         expr = parse_expr(t, transformations=transformations)
+        
+        # Don't treat a bare single symbol (e.g. 'brain', 'python') as a solved math expression
+        if isinstance(expr, sympy.Symbol):
+            return None
+            
         simplified = sympy.simplify(expr)
         
         # If expression is numeric float/int
@@ -61,7 +103,6 @@ def _solve_math(text):
             if simplified.is_Integer:
                 return str(simplified)
             try:
-                # If exact expression like sqrt(2) or pi, also provide decimal if meaningful
                 eval_val = float(simplified.evalf())
                 if abs(eval_val - round(eval_val)) < 1e-9:
                     return f"{simplified} (= {int(round(eval_val))})"
@@ -70,15 +111,10 @@ def _solve_math(text):
                 return str(simplified)
         
         # Symbolic result (e.g. sin(x)/cos(x) -> tan(x))
-        return str(simplified)
+        if str(simplified) != t.strip():
+            return str(simplified)
+        return None
     except Exception:
-        # Fallback to basic eval if safe numbers
-        try:
-            if re.match(r'^[\d\s\+\-\*\/\.\(\)\%]+$', t):
-                val = eval(t, {"__builtins__": None}, {})
-                return str(val)
-        except Exception:
-            pass
         return None
 
 # ── 2. GREETINGS ───────────────────────────────────────────────

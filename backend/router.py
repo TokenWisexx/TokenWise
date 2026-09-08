@@ -2,6 +2,9 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import time
+import warnings
+warnings.filterwarnings("ignore")
+
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
@@ -640,8 +643,11 @@ class EnsembleModel:
         proba = self.clf1.predict_proba(v)[0]
         confidence = float(np.max(proba))
         
-        # Agreement criteria: at least 2 models agree AND confidence clears dynamic alpha bar
-        if top_count >= 2 and confidence >= alpha_threshold:
+        # Effective threshold combines dynamic alpha with a strict domain floor
+        effective_threshold = max(alpha_threshold, 0.62)
+        
+        # Agreement criteria: models agree AND confidence clears effective threshold AND response exists
+        if top_count >= 2 and confidence >= effective_threshold and top_label in CATEGORY_RESPONSES:
             return {
                 "label": top_label,
                 "confidence": round(confidence, 3),
